@@ -1,0 +1,7 @@
+.env
+users.json
+wardrobe_*.json
+history_*.json
+__pycache__/
+*.pyc
+.venv/

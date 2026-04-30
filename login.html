@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StyleAI – Sign In</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #c084fc;
+            --secondary: #f472b6;
+            --accent: #fbbf24;
+            --dark: #18181b;
+            --light: #fafaf9;
+            --text: #27272a;
+            --border: #e4e4e7;
+            --success: #22c55e;
+            --gradient: linear-gradient(135deg, #c084fc 0%, #f472b6 50%, #fbbf24 100%);
+            --shadow: 0 20px 60px rgba(192, 132, 252, 0.15);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(180deg, #faf5ff 0%, #fef3c7 100%);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Navigation ── */
+        nav {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(20px);
+            padding: 20px 0;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(192,132,252,0.1);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* User pill shown when logged in */
+        .user-pill {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 50px;
+            padding: 8px 18px 8px 10px;
+            box-shadow: 0 2px 12px rgba(192,132,252,0.08);
+            cursor: default;
+        }
+
+        .user-pill.show { display: flex; }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--dark);
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 4px;
+        }
+
+        .user-actions button {
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-switch {
+            color: var(--primary);
+            background: rgba(192,132,252,0.08);
+        }
+        .btn-switch:hover { background: rgba(192,132,252,0.18); }
+
+        .btn-logout {
+            color: #ef4444;
+            background: rgba(239,68,68,0.07);
+        }
+        .btn-logout:hover { background: rgba(239,68,68,0.15); }
+
+        /* Nav CTA (shown when logged out) */
+        .nav-cta {
+            display: none;
+            padding: 10px 24px;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .nav-cta.show { display: block; }
+        .nav-cta:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+        /* ── Auth Card Layout ── */
+        .auth-wrap {
+            min-height: calc(100vh - 90px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 30px 80px rgba(192,132,252,0.15), 0 4px 20px rgba(0,0,0,0.05);
+            overflow: hidden;
+            width: 100%;
+            max-width: 960px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 580px;
+            border: 1px solid rgba(192,132,252,0.12);
+        }
+
+        /* Left panel – decorative */
+        .auth-panel {
+            background: linear-gradient(145deg, #c084fc 0%, #f472b6 60%, #fbbf24 100%);
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-panel::before {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            top: -80px; left: -80px;
+        }
+        .auth-panel::after {
+            content: '';
+            position: absolute;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            bottom: -60px; right: -60px;
+        }
+
+        .auth-panel-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-panel-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-panel-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            color: white;
+            line-height: 1.2;
+            margin-bottom: 18px;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-panel-content p {
+            color: rgba(255,255,255,0.85);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        .auth-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .auth-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .auth-features li i {
+            width: 24px; height: 24px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        /* Right panel – forms */
+        .auth-form-panel {
+            padding: 55px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 38px;
+            background: #f4f4f5;
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 11px;
+            border: none;
+            background: transparent;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #71717a;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.25s;
+        }
+
+        .auth-tab.active {
+            background: white;
+            color: var(--dark);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+
+        .auth-form h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.7rem;
+            color: var(--dark);
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-form .sub {
+            color: #71717a;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--dark);
+            margin-bottom: 7px;
+        }
+
+        .field-wrap {
+            position: relative;
+        }
+
+        .field-wrap i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a1a1aa;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            color: var(--text);
+            background: #fafaf9;
+            outline: none;
+            transition: all 0.25s;
+        }
+
+        .field input:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(192,132,252,0.12);
+        }
+
+        .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #a1a1aa;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+        .toggle-pw:hover { color: var(--primary); }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 6px;
+            box-shadow: 0 8px 25px rgba(192,132,252,0.3);
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(192,132,252,0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .submit-btn .spinner {
+            display: none;
+            width: 18px; height: 18px;
+            border: 2.5px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .msg {
+            margin-top: 14px;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .msg.error { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; display: block; }
+        .msg.success { background: #f0fdf4; color: #22c55e; border: 1px solid #bbf7d0; display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Logged-in card ── */
+        .loggedin-card {
+            display: none;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .loggedin-card.show { display: block; }
+
+        .loggedin-avatar {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 30px rgba(192,132,252,0.3);
+        }
+
+        .loggedin-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .loggedin-card p {
+            color: #71717a;
+            font-size: 15px;
+            margin-bottom: 30px;
+        }
+
+        .loggedin-card .go-btn {
+            display: inline-block;
+            padding: 14px 40px;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 8px 25px rgba(192,132,252,0.3);
+            margin-bottom: 14px;
+        }
+
+        .loggedin-card .go-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(192,132,252,0.4);
+        }
+
+        .loggedin-card .switch-link {
+            display: block;
+            margin-top: 10px;
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .loggedin-card .switch-link:hover { text-decoration: underline; }
+
+        /* Auth form wrapper hide when logged in */
+        .form-tabs-wrap { }
+        .form-tabs-wrap.hidden { display: none; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .auth-card {
+                grid-template-columns: 1fr;
+            }
+            .auth-panel {
+                padding: 40px 30px 35px;
+                min-height: 220px;
+            }
+            .auth-panel-content h2 { font-size: 1.7rem; }
+            .auth-panel-content p, .auth-features { display: none; }
+            .auth-form-panel { padding: 40px 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+    <div class="nav-container">
+        <span class="logo" onclick="window.location.href='/'">StyleAI</span>
+        <div class="nav-right">
+
+            <!-- Shown when logged in -->
+            <div class="user-pill" id="userPill">
+                <div class="user-avatar" id="navAvatar">?</div>
+                <span class="user-name" id="navUsername">User</span>
+                <div class="user-actions">
+                    <button class="btn-switch" onclick="switchUser()" title="Sign in as another user">
+                        <i class="fas fa-user-plus"></i> Switch
+                    </button>
+                    <button class="btn-logout" onclick="logout()" title="Sign out">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
+                </div>
+            </div>
+
+            <!-- Shown when logged out -->
+            <button class="nav-cta show" id="navCta" onclick="document.getElementById('loginTab').click()">
+                Sign In
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- ── Auth Wrap ── -->
+<div class="auth-wrap">
+    <div class="auth-card">
+
+        <!-- Left decorative panel -->
+        <div class="auth-panel">
+            <div class="auth-panel-logo">StyleAI</div>
+            <div class="auth-panel-content">
+                <h2>Your AI-powered wardrobe, reimagined.</h2>
+                <p>Sign in to access your personal stylist, outfit recommendations, and travel packing lists.</p>
+                <ul class="auth-features">
+                    <li><i class="fas fa-check"></i> AI outfit recommendations</li>
+                    <li><i class="fas fa-check"></i> Smart wardrobe management</li>
+                    <li><i class="fas fa-check"></i> Travel packing lists</li>
+                    <li><i class="fas fa-check"></i> Style analytics & insights</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right form panel -->
+        <div class="auth-form-panel">
+
+            <!-- Shown when already logged in -->
+            <div class="loggedin-card" id="loggedinCard">
+                <div class="loggedin-avatar" id="loggedinAvatar">?</div>
+                <h3>Welcome back, <span id="loggedinName">User</span>!</h3>
+                <p>You're already signed in. Ready to style?</p>
+                <a class="go-btn" href="/app">Go to My Wardrobe →</a>
+                <a class="switch-link" onclick="switchUser()">
+                    <i class="fas fa-user-plus"></i> Sign in as a different user
+                </a>
+            </div>
+
+            <!-- Login / Register tabs -->
+            <div class="form-tabs-wrap" id="formTabsWrap">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="loginTab" onclick="switchTab('login')">Sign In</button>
+                    <button class="auth-tab" id="registerTab" onclick="switchTab('register')">Create Account</button>
+                </div>
+
+                <!-- Login form -->
+                <div class="auth-form active" id="loginForm">
+                    <h3>Welcome back</h3>
+                    <p class="sub">Sign in to your StyleAI account</p>
+
+                    <div class="field">
+                        <label for="loginUser">Username</label>
+                        <div class="field-wrap">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="loginPass">Password</label>
+                        <div class="field-wrap">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password">
+                            <button class="toggle-pw" onclick="togglePw('loginPass', this)" tabindex="-1" type="button">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="submit-btn" id="loginBtn" onclick="doLogin()">
+                        <span id="loginBtnTxt">Sign In</span>
+                        <div class="spinner" id="loginSpinner"></div>
+                    </button>
+                    <div class="msg" id="loginMsg"></div>
+                </div>
+
+                <!-- Register form -->
+                <div class="auth-form" id="registerForm">
+                    <h3>Create account</h3>
+                    <p class="sub">Start building your AI wardrobe today</p>
+
+                    <div class="field">
+                        <label for="regUser">Username</label>
+                        <div class="field-wrap">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="regUser" placeholder="Choose a username (min 3 chars)" autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="regPass">Password</label>
+                        <div class="field-wrap">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="regPass" placeholder="Choose a password (min 6 chars)" autocomplete="new-password">
+                            <button class="toggle-pw" onclick="togglePw('regPass', this)" tabindex="-1" type="button">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="regPass2">Confirm Password</label>
+                        <div class="field-wrap">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="regPass2" placeholder="Repeat your password" autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <button class="submit-btn" id="regBtn" onclick="doRegister()">
+                        <span id="regBtnTxt">Create Account</span>
+                        <div class="spinner" id="regSpinner"></div>
+                    </button>
+                    <div class="msg" id="regMsg"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── State ─────────────────────────────────────────────────────────────────
+    let currentUser = null;
+
+    // ── Init: check if already logged in ─────────────────────────────────────
+    async function init() {
+        try {
+            const res = await fetch('/api/me');
+            if (res.ok) {
+                const data = await res.json();
+                setLoggedIn(data.username);
+            } else {
+                setLoggedOut();
+            }
+        } catch {
+            setLoggedOut();
+        }
+    }
+
+    // ── UI state helpers ──────────────────────────────────────────────────────
+    function setLoggedIn(username) {
+        currentUser = username;
+        const initial = username.charAt(0).toUpperCase();
+
+        // Nav pill
+        document.getElementById('navAvatar').textContent = initial;
+        document.getElementById('navUsername').textContent = username;
+        document.getElementById('userPill').classList.add('show');
+        document.getElementById('navCta').classList.remove('show');
+
+        // Logged-in card
+        document.getElementById('loggedinAvatar').textContent = initial;
+        document.getElementById('loggedinName').textContent = username;
+        document.getElementById('loggedinCard').classList.add('show');
+        document.getElementById('formTabsWrap').classList.add('hidden');
+    }
+
+    function setLoggedOut() {
+        currentUser = null;
+        document.getElementById('userPill').classList.remove('show');
+        document.getElementById('navCta').classList.add('show');
+        document.getElementById('loggedinCard').classList.remove('show');
+        document.getElementById('formTabsWrap').classList.remove('hidden');
+    }
+
+    // ── Switch user: show login form regardless ───────────────────────────────
+    function switchUser() {
+        setLoggedOut();
+        switchTab('login');
+        clearMsgs();
+    }
+
+    // ── Tab switch ────────────────────────────────────────────────────────────
+    function switchTab(tab) {
+        document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+        document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+        document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+        document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+        clearMsgs();
+    }
+
+    function clearMsgs() {
+        ['loginMsg','regMsg'].forEach(id => {
+            const el = document.getElementById(id);
+            el.className = 'msg';
+            el.textContent = '';
+        });
+    }
+
+    // ── Toggle password visibility ────────────────────────────────────────────
+    function togglePw(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon  = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
+    // ── Show message ──────────────────────────────────────────────────────────
+    function showMsg(id, text, type) {
+        const el = document.getElementById(id);
+        el.textContent = text;
+        el.className = 'msg ' + type;
+    }
+
+    // ── Set loading state ─────────────────────────────────────────────────────
+    function setLoading(prefix, on) {
+        document.getElementById(prefix + 'Btn').disabled = on;
+        document.getElementById(prefix + 'BtnTxt').style.display = on ? 'none' : 'inline';
+        document.getElementById(prefix + 'Spinner').style.display = on ? 'block' : 'none';
+    }
+
+    // ── Login ─────────────────────────────────────────────────────────────────
+    async function doLogin() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value;
+
+        if (!username || !password) {
+            showMsg('loginMsg', 'Please enter your username and password.', 'error');
+            return;
+        }
+
+        setLoading('login', true);
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                showMsg('loginMsg', `Welcome back, ${data.username}! Redirecting…`, 'success');
+                setTimeout(() => { window.location.href = '/app'; }, 1000);
+            } else {
+                showMsg('loginMsg', data.error || 'Login failed. Please try again.', 'error');
+                setLoading('login', false);
+            }
+        } catch {
+            showMsg('loginMsg', 'Could not connect to server. Please try again.', 'error');
+            setLoading('login', false);
+        }
+    }
+
+    // ── Register ──────────────────────────────────────────────────────────────
+    async function doRegister() {
+        const username = document.getElementById('regUser').value.trim();
+        const password = document.getElementById('regPass').value;
+        const confirm  = document.getElementById('regPass2').value;
+
+        if (!username || !password) {
+            showMsg('regMsg', 'Please fill in all fields.', 'error');
+            return;
+        }
+        if (username.length < 3) {
+            showMsg('regMsg', 'Username must be at least 3 characters.', 'error');
+            return;
+        }
+        if (password.length < 6) {
+            showMsg('regMsg', 'Password must be at least 6 characters.', 'error');
+            return;
+        }
+        if (password !== confirm) {
+            showMsg('regMsg', 'Passwords do not match.', 'error');
+            return;
+        }
+
+        setLoading('reg', true);
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                showMsg('regMsg', `Account created! Welcome, ${data.username}! Redirecting…`, 'success');
+                setTimeout(() => { window.location.href = '/app'; }, 1200);
+            } else {
+                showMsg('regMsg', data.error || 'Registration failed. Please try again.', 'error');
+                setLoading('reg', false);
+            }
+        } catch {
+            showMsg('regMsg', 'Could not connect to server. Please try again.', 'error');
+            setLoading('reg', false);
+        }
+    }
+
+    // ── Logout ────────────────────────────────────────────────────────────────
+    async function logout() {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+        } catch {}
+        setLoggedOut();
+    }
+
+    // ── Enter key support ─────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        if (document.getElementById('loginForm').classList.contains('active')) doLogin();
+        else doRegister();
+    });
+
+    // ── Run ───────────────────────────────────────────────────────────────────
+    init();
+</script>
+</body>
+</html>
