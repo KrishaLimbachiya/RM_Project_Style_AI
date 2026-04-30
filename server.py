@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from groq import Groq
 
 load_dotenv(dotenv_path=".env")
-PORT = 3004
+PORT = int(os.getenv('PORT', 3004))
 USERS_FILE = 'users.json'
 GROQ_API_KEY  = os.getenv('GROQ_API_KEY', '')
 GROQ_MODEL = 'llama-3.3-70b-versatile'
