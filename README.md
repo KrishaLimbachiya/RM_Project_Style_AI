@@ -26,9 +26,10 @@ A web-based wardrobe management application with AI-powered outfit recommendatio
    - Add your Groq API key(s):
      ```
      GROQ_API_KEY=your_groq_api_key_here
-     GROQ_API_KEY_2=your_second_groq_api_key_here  # Optional
+     GROQ_MODEL=qwen/qwen3.8-27b
      ```
    - Get API keys from [Groq Console](https://console.groq.com/)
+   - `GROQ_MODEL` is optional; the default is `qwen/qwen3.8-27b`. If Groq changes model availability, set it to an active chat model listed in the [Groq model catalog](https://console.groq.com/docs/models), then restart the server.
 
 ## Usage
 
@@ -82,7 +83,11 @@ A web-based wardrobe management application with AI-powered outfit recommendatio
 ## Troubleshooting
 
 - **AI features not working**: Ensure `GROQ_API_KEY` is set in `.env`
-- **Port already in use**: Change the `PORT` variable in `server.py`
+- **Groq returns 401**: The key is invalid or revoked. Create a replacement key in the Groq Console, update `.env`, and restart the server.
+- **Groq returns 403 / “Access denied”**: Check that the key is active and has access to the project/model. Review any IP allowlist or network restrictions, and try without a VPN or proxy or from another network. A 403 from Groq cannot be fixed by changing the wardrobe data.
+- **Groq returns 429**: Check your account’s rate and usage limits, then retry after the limit resets.
+- **Key exposure**: Never paste or commit API keys. If a key has been shared, revoke it in the Groq Console immediately and replace it in `.env`; restarting the server is required to load the replacement.
+- **Port already in use**: By default, the server tries the next available port. Set `PORT` in your environment to require a specific port.
 - **Permission errors**: Run the server with appropriate permissions
 
 ## License

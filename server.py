@@ -2,17 +2,19 @@ import http.server
 import socketserver
 import json
 import os
+import errno
 import hashlib
 import secrets
 import time
 from dotenv import load_dotenv
 from groq import Groq
 
-load_dotenv(dotenv_path=".env")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(dotenv_path=os.path.join(BASE_DIR, ".env"))
 PORT = int(os.getenv('PORT', 3004))
 USERS_FILE = 'users.json'
-GROQ_API_KEY  = os.getenv('GROQ_API_KEY', '')
-GROQ_MODEL = 'llama-3.3-70b-versatile'
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+GROQ_MODEL = os.getenv('GROQ_MODEL', 'openai/gpt-oss-120b')
 
 # ── Groq clients ──────────────────────────────────────────────────────────────
 # groq_client  → used by /api/recommend  (wardrobe outfits)
@@ -76,6 +78,25 @@ def _load_json(path, default):
 def _save_json(path, data):
     with open(path, 'w') as f:
         json.dump(data, f, indent=2)
+
+
+def _groq_error_response(error):
+    status_code = getattr(error, 'status_code', None)
+    if status_code == 401:
+        message = 'Groq rejected the API key. Replace GROQ_API_KEY in .env with an active key, then restart the server.'
+    elif status_code == 403:
+        message = 'Groq denied access (HTTP 403). Check the key’s project permissions and IP/network restrictions; disable any blocking VPN, proxy, or firewall, then retry.'
+    elif status_code == 404:
+        message = 'Groq could not find the requested model. Check that the configured model is currently available to your account.'
+    elif status_code == 429:
+        message = 'Groq rate or usage limit reached. Check your account limits and try again later.'
+    elif status_code is None:
+        message = 'Could not connect to Groq. Check your internet connection, VPN, proxy, and firewall settings.'
+    else:
+        message = f'Groq could not complete the request (HTTP {status_code}). Check Groq service status and account settings.'
+
+    print(f"Groq request failed: {type(error).__name__} (HTTP {status_code or 'n/a'})")
+    return 502, message
 
 
 def _create_session(username):
@@ -334,18 +355,24 @@ Rules:
 - Consider color coordination and style compatibility
 - Match the occasion and weather"""
 
-                completion = groq_client.chat.completions.create(
-                    model=GROQ_MODEL,
-                    messages=[
-                        {'role': 'system', 'content': 'You are a professional fashion stylist. Always respond with valid JSON only, no markdown formatting.'},
-                        {'role': 'user', 'content': prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=2048
-                )
+                try:
+                    completion = groq_client.chat.completions.create(
+                        model=GROQ_MODEL,
+                        messages=[
+                            {'role': 'system', 'content': 'You are a professional fashion stylist. Always respond with valid JSON only, no markdown formatting.'},
+                            {'role': 'user', 'content': prompt}
+                        ],
+                        temperature=0.7,
+                        max_tokens=2048
+                    )
+                except Exception as e:
+                    status, message = _groq_error_response(e)
+                    self._json(status, {'error': message})
+                    return
+
                 ai_response = completion.choices[0].message.content
-                print("🤖 AI API called successfully for outfit recommendations")
-                print(f"🤖 AI Response: {ai_response[:200]}...")  # Print first 200 chars
+                print("AI API called successfully for outfit recommendations")
+                print(f"AI response: {ai_response[:200]}...")  # Print first 200 chars
                 self._json(200, {'result': ai_response})
             except Exception as e:
                 self._json(500, {'error': str(e)})
@@ -361,16 +388,22 @@ Rules:
                     self._json(500, {'error': 'Groq API key not configured. Add GROQ_API_KEY to your .env file.'})
                     return
 
-                completion = groq_client2.chat.completions.create(
-                    model=GROQ_MODEL,
-                    messages=[
-                        {'role': 'system', 'content': 'You are a helpful assistant. Always respond with valid JSON only, no markdown formatting.'},
-                        {'role': 'user', 'content': prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=2048
-                )
-                print("🤖 AI API called successfully for stats/travel recommendations")
+                try:
+                    completion = groq_client2.chat.completions.create(
+                        model=GROQ_MODEL,
+                        messages=[
+                            {'role': 'system', 'content': 'You are a helpful assistant. Always respond with valid JSON only, no markdown formatting.'},
+                            {'role': 'user', 'content': prompt}
+                        ],
+                        temperature=0.7,
+                        max_tokens=2048
+                    )
+                except Exception as e:
+                    status, message = _groq_error_response(e)
+                    self._json(status, {'error': message})
+                    return
+
+                print("AI API called successfully for stats/travel recommendations")
                 self._json(200, {'result': completion.choices[0].message.content})
             except Exception as e:
                 self._json(500, {'error': str(e)})
@@ -389,14 +422,33 @@ Rules:
         print(f"[{self.address_string()}] {fmt % args}")
 
 
-with socketserver.TCPServer(("", PORT), MyHandler) as httpd:
-    print(f"✅  StyleAI running at http://localhost:{PORT}/")
-    print(f"📄  Pages: /login  /app  (Stats & Travel are tabs inside /app)")
-    print(f"📁  Data stored per-user in wardrobe_<user>.json & history_<user>.json")
+def _create_http_server():
+    try:
+        return socketserver.TCPServer(("", PORT), MyHandler)
+    except OSError as error:
+        if error.errno != errno.EADDRINUSE or "PORT" in os.environ:
+            raise
+        print(f"Port {PORT} is already in use; trying the next available port.")
+
+    for port in range(PORT + 1, 65536):
+        try:
+            return socketserver.TCPServer(("", port), MyHandler)
+        except OSError as error:
+            if error.errno != errno.EADDRINUSE:
+                raise
+
+    raise OSError(errno.EADDRINUSE, "No available ports found")
+
+
+with _create_http_server() as httpd:
+    actual_port = httpd.server_address[1]
+    print(f"StyleAI running at http://localhost:{actual_port}/")
+    print("Pages: /login  /app  (Stats & Travel are tabs inside /app)")
+    print("Data stored per-user in wardrobe_<user>.json & history_<user>.json")
 
     if groq_client:
-        print(f"🤖  Groq API ready  → /api/recommend & /api/recommend2 ({GROQ_MODEL})")
+        print(f"Groq API ready -> /api/recommend & /api/recommend2 ({GROQ_MODEL})")
     else:
-        print("⚠️   WARNING: GROQ_API_KEY not set in .env — AI features will not work!")
+        print("WARNING: GROQ_API_KEY not set in .env; AI features will not work.")
 
     httpd.serve_forever()
